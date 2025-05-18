@@ -1,0 +1,28 @@
+version: 0.2
+
+env:
+  variables:
+    GITHUB_OWNER: "your-github-username"
+    REPO_NAME: "your-repo-name"
+    IMAGE_NAME: "my-docker-app"
+  secrets-manager:
+    GITHUB_TOKEN: "github-pat-secret-name"  # Stored in AWS Secrets Manager
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to GitHub Container Registry...
+      - echo $GITHUB_TOKEN | docker login ghcr.io -u $GITHUB_OWNER --password-stdin
+  
+  build:
+    commands:
+      - echo Building Docker image...
+      - docker build -t $IMAGE_NAME .
+      - docker tag $IMAGE_NAME ghcr.io/$GITHUB_OWNER/$IMAGE_NAME:latest
+  
+  post_build:
+    commands:
+      - echo Pushing to GitHub Container Registry...
+      - docker push ghcr.io/$GITHUB_OWNER/$IMAGE_NAME:latest
+      - echo Build completed on $(date)
+
